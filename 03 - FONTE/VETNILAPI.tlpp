@@ -1,0 +1,181 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "FILEIO.CH"
+
+/*/{Protheus.doc} VetnilAPI
+	Classe para integração com a API da Vetnil
+	@author      Thalys Augusto
+	@since   14-05-2025
+/*/
+Class VetnilAPI
+    Data cUser as Character
+    Data cSenha as Character
+    Data cAmbiente as Character
+    Data cToken as Character
+
+    Public Method New(cUser, cSenha, cAmbiente) Constructor
+    Public Method Login()
+    Public Method UploadBase64(cTipo, cFileName, cArquivo)
+    Public Method FileToBase64_ISO(cArquivo)
+EndClass
+
+/*/{Protheus.doc} New
+    Construtor da classe VetnilAPI
+    @param cUser - Usuário da API
+    @param cSenha - Senha do usuário
+    @param cAmbiente - Ambiente da API (H para homologação, P para produção)
+    @return Self - Retorna a instância da classe
+/*/
+Method New(cUser, cSenha, cAmbiente) Class VetnilAPI
+    ::cUser := cUser
+    ::cSenha := cSenha
+    ::cAmbiente := cAmbiente
+    ::cToken := ""
+Return Self
+
+/*/{Protheus.doc} Login
+    Realiza o login na API da Vetnil
+    @return .T. se o login foi realizado com sucesso, .F. caso contrário
+/*/
+Method Login() Class VetnilAPI
+    Local aHeader := {} as Array
+    Local cURL := "" as Character
+    Local cOrigin := "" as Character
+    Local cJson := "" as Character
+    Local oRest as Object
+    Local cRetorno := "" as Character
+    Local cToken := "" as Character
+    Local oJson := JsonObject():New()
+
+    If ::cAmbiente == "H"
+        cURL := "https://vetnil.homolog.api.4sales.com.br/v1"
+        cOrigin := "vetnil.homolog.4sales.com.br"
+    Else
+        cURL := "https://vetnil.api.4sales.com.br/v1"
+        cOrigin := "vetnil.4sales.com.br"
+    EndIf
+
+    oRest := FwRest():New(cURL)
+    oRest:setPath('/login')
+
+    cJson := '{"emailOrUsername":"' + ::cUser + '","password":"' + ::cSenha + '"}'
+
+    aAdd(aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus 12.1.x)')
+    aAdd(aHeader, 'Content-Type: application/json; charset=utf-8')
+    Aadd(aHeader, "Origin: " + cOrigin)
+
+    oRest:SetPostParams(cJson)
+
+    If oRest:Post(aHeader)
+        cRetorno := oRest:GetResult()
+        If "token" $ cRetorno
+            oJson:FromJson(cRetorno)
+            cToken := oJson["token"]["token"]
+            ::cToken := cToken
+            Return .T.
+        EndIf
+    EndIf
+    ::cToken := ""
+Return .F.
+
+/*/{Protheus.doc} UploadBase64
+    Realiza o upload de um arquivo em base64 para a API da Vetnil
+    @param cTipo - Tipo de arquivo (ex: "image/jpeg")
+    @param cFileName - Nome do arquivo
+    @param cArquivo - Caminho do arquivo
+    @return String - Retorna o conteúdo da resposta da API
+/*/
+Method UploadBase64(cTipo, cFileName, cArquivo) Class VetnilAPI
+    Local aHeader := {} as Array
+    Local cURL := "" as Character
+    Local cOrigin := "" as Character
+    Local cJson := "" as Character
+    Local oRest as Object
+    Local cRetorno := "" as Character
+    Local cBase64 := "" as Character
+
+    If ::cToken == ""
+        Return "Token não definido. Faça o login primeiro."
+    EndIf
+
+    If ::cAmbiente == "H"
+        cURL := "https://vetnil.homolog.api.4sales.com.br/v1"
+        cOrigin := "vetnil.homolog.4sales.com.br"
+    Else
+        cURL := "https://vetnil.api.4sales.com.br/v1"
+        cOrigin := "vetnil.4sales.com.br"
+    EndIf
+
+    cBase64 := ::FileToBase64_ISO(cArquivo)
+
+    cJson := '{' +;
+        '"type":"' + cTipo + '",' +;
+        '"filename":"' + cFileName + '",' +;
+        '"file":"' + cBase64 + '"}'
+
+    oRest := FwRest():New(cURL)
+
+    //Define a PATH da URL
+    oRest:setPath('/file/documents/base64')
+
+    //Monta o cabeçalho da Requisição
+    aAdd(aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus 12.1.x)')
+    aAdd(aHeader, 'Content-Type: application/json; charset=utf-8')
+    Aadd(aHeader, 'Origin: ' + cOrigin)
+    Aadd(aHeader, 'Authorization: Bearer ' + ::cToken)
+
+    //Define o corpo da requisição
+    oRest:SetPostParams(cJson)
+
+    If oRest:Post(aHeader)
+        cRetorno := oRest:GetResult()
+
+        // Grava o sucesso de integração na tabela ZVE
+        DBSelectArea("ZVE")
+        ZVE->(DbSetOrder(1))
+        RecLock('ZVE',.T.)
+        ZVE->ZVE_FILENA := cFileName
+        ZVE->ZVE_DTINCL := FWTimeStamp(2)
+        ZVE->ZVE_ARQUIV := cArquivo
+        ZVE->ZVE_STATUS := "1"
+        ZVE->ZVE_TIPO := cTipo
+        ZVE->ZVE_RESULT := cRetorno
+        ZVE->(MsUnlock())
+        ZVE->(DbCloseArea())
+    Else
+        cRetorno := "Erro ao enviar arquivo: " + oRest:GetLastError() + " - " + oRest:GetResult()
+
+        // Grava o erro de integração na tabela ZVE
+        DBSelectArea("ZVE")
+        ZVE->(DbSetOrder(1))
+        RecLock('ZVE',.T.)
+        ZVE->ZVE_FILENA := cFileName
+        ZVE->ZVE_DTINCL := FWTimeStamp(2)
+        ZVE->ZVE_ARQUIV := cArquivo
+        ZVE->ZVE_STATUS := "2"
+        ZVE->ZVE_TIPO := cTipo
+        ZVE->ZVE_RESULT := cRetorno
+        ZVE->(MsUnlock())
+        ZVE->(DbCloseArea())
+    EndIf
+
+Return cRetorno
+
+/*/{Protheus.doc} FileToBase64_ISO
+    Converte um arquivo para base64 ISO-8859-1
+    @param cArquivo - Caminho do arquivo
+    @return String - Retorna o conteúdo do arquivo em base64
+/*/
+Method FileToBase64_ISO(cArquivo) Class VetnilAPI
+    Local cBase64 := "" as Character
+    Local nHandle := 0 as Numeric
+    Local cBuffer := "" as Character
+
+    nHandle := FOpen(cArquivo)
+    If nHandle > 0
+        cBuffer := Space(FSeek(nHandle, 0, FS_END))
+        FSeek(nHandle, 0, FS_SET)
+        FRead(nHandle, @cBuffer, Len(cBuffer))
+        cBase64 := Encode64(cBuffer)
+        FClose(nHandle)
+    EndIf
+Return cBase64

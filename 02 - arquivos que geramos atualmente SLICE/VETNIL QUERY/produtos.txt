@@ -1,0 +1,19 @@
+ SELECT                                                         
+ 'Codigo Produto;Descricao;' + CHAR(13) + CHAR(10) AS 'PRODUTO' 
+ UNION ALL 
+ SELECT                                
+   TRIM(B1_COD)  + ';' +		          
+   TRIM(B1_DESC) + ';' +               
+   + CHAR(13) + CHAR(10) AS PRODUTO    
+ FROM                                  
+ 	SB1010                            
+ INNER JOIN                            
+ 	SBM010                            
+ ON                                    
+ 	BM_FILIAL = '01'                  
+ AND BM_GRUPO  = B1_GRUPO              
+ AND SBM010.D_E_L_E_T_ <> '*'          
+  WHERE                                
+ 	 SB1010.D_E_L_E_T_ <> '*'         
+  AND B1_MSBLQL <> '1'                 
+  AND B1_GRUPO IN ('0067', '1034')     

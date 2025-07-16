@@ -1,0 +1,107 @@
+ SELECT                                                         
+ 'Distribuidor;CNPJ;Codigo Vendedor;Codigo Cliente;Codigo Produto;Quantidade;Valor Total;Data;Numero Nota;Tipo de Saida;' + CHAR(13) + CHAR(10) AS 'IVENDA' 
+ UNION ALL 
+ SELECT                                                                                    
+   'IMPORTADORA BAGE SA' + ';' +                                                           
+   '92785047000126' + ';' +                                                                
+   (SELECT TOP 1 SF2SUB.F2_VEND1 FROM SF2010 SF2SUB WHERE SF2SUB.F2_FILIAL = '01' AND SF2SUB.F2_DOC = D2_DOC AND SF2SUB.F2_SERIE = D2_SERIE AND SF2SUB.D_E_L_E_T_ <> '*') + ';' + 
+   TRIM(A1_COD) + ';' +                                                                    
+   TRIM(B1_COD) + ';' +                                                                    
+   CAST(CAST(D2_QUANT AS decimal(20)) AS varchar(100)) + ';' +                             
+   CAST(CAST(CASE                                                                          
+     WHEN LF.[Valor Venda] > 0                                                             
+ 	THEN LF.[Valor Venda] * 100                                                                
+     WHEN LF.[Valor Bonificação] > 0                                                       
+ 	THEN LF.[Valor Bonificação] * 100                                                           
+     WHEN LF.[Valor Devolução] < 0                                                         
+ 	THEN LF.[Valor Devolução] * 100                                                             
+   END AS decimal(20)) AS varchar(100)) + ';' +                                            
+   D2_EMISSAO + ';' +                                                                      
+   D2_DOC + ';' +                                                                          
+   CASE                                                                                    
+     WHEN LF.[Valor Venda] > 0                                                             
+ 	THEN 'VENDA'                                                                          
+     WHEN LF.[Valor Bonificação] > 0                                                       
+ 	THEN 'BONIFICACAO'                                                                    
+     WHEN LF.[Valor Devolução] < 0                                                         
+ 	THEN 'DEVOLUCAO'                                                                      
+   END + ';' +                                                                             
+   +CHAR(13) + CHAR(10)                                                                    
+   AS IVENDA                                                                               
+ FROM [IBASADW_NEW].[dbo].[F_Livros_Fiscais] LF                                            
+ INNER JOIN SD2010                                                                         
+   ON LF.[Key Nota Fiscal Item] = D2_DOC + '|'                                             
+                                  + CONVERT(varchar, D2_SERIE) + '|'                       
+ 								 + CONVERT(varchar, D2_CLIENTE) + '|'                     
+ 								 + CONVERT(varchar, D2_LOJA) + '|'                        
+ 								 + D2_COD + '|'                                           
+ 								 + CONVERT(varchar, D2_ITEM)                              
+ INNER JOIN SA1010                                                                         
+   ON A1_FILIAL = ''                                                                       
+   AND A1_COD = D2_CLIENTE                                                                 
+   AND A1_LOJA = D2_LOJA                                                                   
+ INNER JOIN SF4010                                                                         
+   ON F4_FILIAL = D2_FILIAL                                                                
+   AND F4_CODIGO = D2_TES                                                                  
+ INNER JOIN SB1010                                                                         
+   ON B1_FILIAL = ''                                                                       
+   AND B1_COD = D2_COD                                                                     
+ WHERE SD2010.D_E_L_E_T_ = ' '                                                               
+ AND SB1010.D_E_L_E_T_ = ' '                                                               
+ AND SF4010.D_E_L_E_T_ = ' '                                                               
+ AND SA1010.D_E_L_E_T_ = ' '                                                               
+  AND D2_EMISSAO = 20250429                                                          
+  AND B1_GRUPO IN ('0067', '1034')                                                         
+ UNION ALL                                                                                 
+ SELECT                                                                                    
+   'IMPORTADORA BAGE SA' + ';' +                                                           
+   '92785047000126' + ';' +                                                                
+   (SELECT TOP 1 SF2SUB.F2_VEND1 FROM SF2010 SF2SUB WHERE SF2SUB.F2_FILIAL = '01' AND SF2SUB.F2_DOC = D1_NFORI AND SF2SUB.F2_SERIE = D1_SERIORI AND SF2SUB.D_E_L_E_T_ <> '*') + ';' + 
+   TRIM(A1_COD) + ';' +                                                                          
+   TRIM(B1_COD) + ';' +                                                                          
+   CAST(CAST(D1_QUANT AS decimal(20)) AS varchar(100)) + ';' +                             
+   CAST(CAST(CASE                                                                          
+     WHEN LF.[Valor Venda] > 0                                                             
+ 	THEN (LF.[Valor Venda] * 100) * -1                                                    
+     WHEN LF.[Valor Bonificação] > 0                                                       
+ 	THEN (LF.[Valor Bonificação] * 100) * -1                                              
+     WHEN LF.[Valor Devolução] < 0                                                         
+ 	THEN (LF.[Valor Devolução] * 100) * -1                                                
+   END AS decimal(20)) AS varchar(100)) + ';' +                                            
+   D1_EMISSAO + ';' +                                                                      
+   D1_DOC + ';' +                                                                          
+   CASE                                                                                    
+     WHEN LF.[Valor Venda] > 0                                                             
+ 	THEN 'VENDA'                                                                          
+     WHEN LF.[Valor Bonificação] > 0                                                       
+ 	THEN 'BONIFICACAO'                                                                    
+     WHEN LF.[Valor Devolução] < 0                                                         
+ 	THEN 'DEVOLUCAO'                                                                      
+   END + ';' +                                                                             
+   +CHAR(13) + CHAR(10)                                                                    
+   AS IVENDA                                                                               
+ FROM [IBASADW_NEW].[dbo].[F_Livros_Fiscais] LF                                            
+ INNER JOIN SD1010                                                                         
+   ON LF.[Key Nota Fiscal Item] = D1_DOC + '|'                                             
+                                  + CONVERT(varchar, D1_SERIE) + '|'                       
+ 								 + CONVERT(varchar, D1_FORNECE) + '|'                     
+ 								 + CONVERT(varchar, D1_LOJA) + '|'                        
+ 								 + D1_COD + '|'                                           
+ 								 + CONVERT(varchar, D1_ITEM)                              
+ INNER JOIN SA1010                                                                         
+   ON A1_FILIAL = ''                                                                       
+   AND A1_COD = D1_FORNECE                                                                 
+   AND A1_LOJA = D1_LOJA                                                                   
+ INNER JOIN SF4010                                                                         
+   ON F4_FILIAL = D1_FILIAL                                                                
+   AND F4_CODIGO = D1_TES                                                                  
+ INNER JOIN SB1010                                                                         
+   ON B1_FILIAL = ''                                                                       
+   AND B1_COD = D1_COD                                                                     
+ WHERE SD1010.D_E_L_E_T_ = ' '                                                             
+ AND SB1010.D_E_L_E_T_ = ' '                                                               
+ AND SF4010.D_E_L_E_T_ = ' '                                                               
+ AND SA1010.D_E_L_E_T_ = ' '                                                               
+ 	   AND D1_EMISSAO = 20250429                                                    
+ 	   AND B1_GRUPO IN ('0067', '1034')                                                   
+ AND LF.[Valor Devolução] < 0                                                              

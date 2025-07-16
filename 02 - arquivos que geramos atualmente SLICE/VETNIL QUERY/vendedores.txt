@@ -1,0 +1,13 @@
+ SELECT                                                         
+ 'Codigo Vendedor;Nome;' + CHAR(13) + CHAR(10) AS 'VENDEDOR' 
+ UNION ALL 
+ SELECT                              
+   TRIM(A3_COD)  + ';' +		        
+   TRIM(A3_NOME) + ';' +             
+   + CHAR(13) + CHAR(10) AS VENDEDOR 
+ FROM                                
+ 	SA3010                          
+ WHERE                               
+     SA3010.D_E_L_E_T_ <> '*'        
+ AND A3_MSBLQL <> '1'                
+ AND A3_EQUICOM IN (000005,000001) 

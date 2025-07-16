@@ -1,0 +1,32 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "totvs_language_web_debug",
+			"request": "launch",
+			"name": "Depuração do idioma TOTVS",
+			"program": "${command:AskForProgramName}",
+			"cwb": "${workspaceFolder}",
+			"isMultiSession": true,
+			"enableTableSync": true
+		}
+	],
+	"lastPrograms": [
+		{
+			"label": "SIGAMDI"
+		},
+		{
+			"args": [],
+			"label": "U_IBSSLICE"
+		},
+		{
+			"args": [],
+			"label": "u_executil"
+		},
+		{
+			"label": "SIGAADV"
+		}
+	],
+	"lastProgramExecuted": "SIGAMDI",
+	"lastProgramArguments": []
+}

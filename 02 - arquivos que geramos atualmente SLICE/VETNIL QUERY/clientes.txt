@@ -1,0 +1,43 @@
+ SELECT                                                         
+ 'Codigo do Cliente;CNPJ;Nome;Endereço;Numero;Bairro;Municipio;Estado;Nome Fantasia;Tipo Estabelecimento;Categoria;CEP;' + CHAR(13) + CHAR(10) AS 'CLIENTES'  
+ UNION ALL 
+ SELECT                                                                                          
+  A1_COD + ';' +			--COD                                                                   
+  A1_CGC + ';' +			--CNPJ/CPF                                                              
+  TRIM(A1_NOME) + ';' +	--Razao social / Nome                                                   
+  TRIM(A1_END) + ';' +			--Endereco                                                      
+  CAST(A1_NR_END AS VARCHAR(100)) + ';' +	--Numero                                            
+  TRIM(A1_BAIRRO) + ';' +		--Bairro                                                        
+  TRIM(A1_MUN) + ';' +  	--Cidade                                                                
+  A1_EST + ';' +			--Estado                                                                
+  A1_NREDUZ + ';' +		--Nome fantasia                                                         
+  A1_TPVTNL + ';' +		--Tipo Estabelecimento                                                  
+  A1_CATEGOR + ';' +		--Categoria                                                             
+  A1_CEP + ';' +			--CEP                                                                   
+   + CHAR(13) + CHAR(10) AS 'CLIENTES'                                                           
+  FROM SA1010                                                                                    
+  INNER JOIN SD2010                                                                              
+  ON  D2_FILIAL  = '01'                                                                          
+  AND D2_CLIENTE = A1_COD                                                                        
+  AND D2_LOJA    = A1_LOJA                                                                       
+  AND SD2010.D_E_L_E_T_ <> '*'                                                                   
+  INNER JOIN SB1010                                                                              
+  ON  B1_FILIAL  = ''                                                                            
+  AND B1_COD     = D2_COD                                                                        
+  WHERE SA1010.D_E_L_E_T_ <> '*'                                                                 
+   AND B1_GRUPO IN ('0067', '1034')                                                              
+   AND D2_TIPO = 'N'                                                                             
+   AND D2_EMISSAO = 20250429                                                               
+  GROUP BY                                                                                       
+  A1_COD,                                                                                        
+  A1_CGC,                                                                                        
+  A1_NOME,                                                                                       
+  A1_END,                                                                                        
+  A1_NR_END,                                                                                     
+  A1_BAIRRO,                                                                                     
+  A1_MUN,                                                                                        
+  A1_EST,                                                                                        
+  A1_NREDUZ,                                                                                     
+  A1_CEP,                                                                                        
+  A1_TPVTNL,                                                                                    
+  A1_CATEGOR                                                                                     

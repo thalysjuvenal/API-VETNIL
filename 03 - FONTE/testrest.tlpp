@@ -1,0 +1,129 @@
+//Includes
+#Include "TOTVS.ch"
+
+/*/{Protheus.doc} TRestClient
+    Classe responsável por gerenciar as requisições REST
+
+    @type class
+    @author      Thalys Augusto
+    @Enterprise  DNA Consulty
+    @Site        www.dnaconsulty.com.br
+    @since       14-04-2025
+    @version     1.0
+/*/
+Class TRestClient
+    Data cUrl as character
+    Data oRestClient as object
+    Data aHeader as array
+    Data cBody as character
+
+    Method New() Constructor
+    Method SetHeaders()
+    Method SetBody(cBody)
+    Method SendRequest()
+EndClass
+
+/*/{Protheus.doc} New
+    Construtor da classe TRestClient
+
+    @type method
+    @author      Thalys Augusto
+    @Enterprise  DNA Consulty
+    @Site        www.dnaconsulty.com.br
+    @since       14-04-2025
+    @version     1.0
+    @return Self - Retorna a instância da classe
+/*/
+
+Method New() Class TRestClient
+    ::cUrl := 'http://localhost:8000/api'
+    ::oRestClient := FWRest():New(::cUrl)
+    ::aHeader := {}
+    ::cBody := ''
+Return Self
+
+/*/{Protheus.doc} SetHeaders
+    Configura os headers padrão para a requisição REST
+
+    @type method
+    @author      Thalys Augusto
+    @Enterprise  DNA Consulty
+    @Site        www.dnaconsulty.com.br
+    @since       14-04-2025
+    @version     1.0
+/*/
+Method SetHeaders() Class TRestClient
+    aAdd(::aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus 12.1.x)')
+    aAdd(::aHeader, 'Content-Type: application/json; charset=utf-8')
+Return Nil
+
+/*/{Protheus.doc} SetBody
+    Define o corpo da requisição REST
+
+    @type method
+    @author      Thalys Augusto
+    @Enterprise  DNA Consulty
+    @Site        www.dnaconsulty.com.br
+    @since       14-04-2025
+    @version     1.0
+    @param cBody - String contendo o JSON a ser enviado
+/*/
+Method SetBody(cBody) Class TRestClient
+    ::cBody := cBody
+Return Nil
+
+/*/{Protheus.doc} SendRequest
+    Executa a requisição REST e trata a resposta
+
+    @type method
+    @author      Thalys Augusto
+    @Enterprise  DNA Consulty
+    @Site        www.dnaconsulty.com.br
+    @since       14-04-2025
+    @version     1.0
+/*/
+Method SendRequest() Class TRestClient
+    Local cResultado := ''
+    Local cErro := ''
+
+    ::oRestClient:setPath('/products')
+    ::oRestClient:SetPostParams(::cBody)
+
+    If ::oRestClient:Get(::aHeader)
+        cResultado := ::oRestClient:GetResult()
+        ShowLog('Sucesso na integração, resultado é: ' + CRLF + cResultado)
+    Else
+        cErro := ::oRestClient:GetLastError()
+        ShowLog('Houve um erro na integração: ' + CRLF + cErro)
+    EndIf
+Return Nil
+
+/*/{Protheus.doc} U_TESTREST
+    Função principal que demonstra o uso da classe TRestClient
+
+    @type function
+    @author      Thalys Augusto
+    @Enterprise  DNA Consulty
+    @Site        www.dnaconsulty.com.br
+    @since       14-04-2025
+    @version     1.0
+    @example Exemplo de uso:
+        U_TESTREST()
+/*/
+Function U_TESTREST()
+    Local aArea := FWGetArea() as array
+    Local oRest := TRestClient():New() as object
+    Local cBody := '' as character
+
+    //Preenche o Body da Requisição
+    cBody := '{"nome": "João", "idade": 30}'
+
+    //Configura e executa a requisição
+    oRest:SetHeaders()
+    oRest:SetBody(cBody)
+    oRest:SendRequest()
+
+    //Libera a memória
+    FWRestArea(aArea)
+    FreeObj(oRest)
+Return Nil
